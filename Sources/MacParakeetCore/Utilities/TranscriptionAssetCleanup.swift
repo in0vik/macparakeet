@@ -341,7 +341,8 @@ public enum TranscriptionAssetCleanup {
         let target = fileURL.standardizedFileURL.resolvingSymlinksInPath()
         let folder = target.deletingLastPathComponent()
         guard folder.deletingLastPathComponent().path == root.path,
-              UUID(uuidString: folder.lastPathComponent) != nil else { return }
+            UUID(uuidString: folder.lastPathComponent) != nil
+        else { return }
 
         try removeItem(at: target, fileManager: fileManager)
         if (try? fileManager.contentsOfDirectory(atPath: folder.path).isEmpty) == true {

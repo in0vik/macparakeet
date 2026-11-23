@@ -144,7 +144,9 @@ struct TranscribeView: View {
                                     SoundManager.shared.play(.fileDropped)
                                     return true
                                 },
-                                onImportFailure: { viewModel.setError(message: "Could not import the dropped recording.") },
+                                onImportFailure: {
+                                    viewModel.setError(message: "Could not import the dropped recording.")
+                                },
                                 onBrowse: { openFilePicker() }
                             )
                         }
