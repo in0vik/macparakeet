@@ -142,8 +142,10 @@ struct RetranscribeCommand: AsyncParsableCommand, CLITelemetryMetadataProviding 
     var mode: TranscribeMode = .appDefault
 
     @Option(
-        help: "Speech engine: app-default, parakeet, nemotron, whisper, cohere, gemini. "
-            + "Gemini sends audio to Google; app-default follows the saved GUI preference."
+        help: ArgumentHelp(
+            "Speech engine: app-default, parakeet, nemotron, whisper, cohere, gemini. "
+                + "Gemini sends audio to Google; app-default follows the saved GUI preference."
+        )
     )
     var engine: TranscribeSpeechEngine = .parakeet
 
