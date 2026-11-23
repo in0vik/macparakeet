@@ -138,7 +138,8 @@ public enum TranscriptionAssetCleanup {
         case .meeting:
             _ = try removeOwnedMeetingAudioUnlocked(for: transcription, fileManager: fileManager)
         case .file:
-            return
+            guard let filePath = transcription.filePath else { return }
+            try removeImportedRecording(at: URL(fileURLWithPath: filePath), fileManager: fileManager)
         }
     }
 
@@ -328,6 +329,23 @@ public enum TranscriptionAssetCleanup {
                 mixedAudioURL: nil
             )
             try removeMeetingAudioFiles(plan, fileManager: fileManager)
+        }
+    }
+
+    static func removeImportedRecording(
+        at fileURL: URL,
+        fileManager: FileManager,
+        importsDirectory: URL = URL(fileURLWithPath: AppPaths.importedRecordingsDir, isDirectory: true)
+    ) throws {
+        let root = importsDirectory.standardizedFileURL.resolvingSymlinksInPath()
+        let target = fileURL.standardizedFileURL.resolvingSymlinksInPath()
+        let folder = target.deletingLastPathComponent()
+        guard folder.deletingLastPathComponent().path == root.path,
+              UUID(uuidString: folder.lastPathComponent) != nil else { return }
+
+        try removeItem(at: target, fileManager: fileManager)
+        if (try? fileManager.contentsOfDirectory(atPath: folder.path).isEmpty) == true {
+            try? fileManager.removeItem(at: folder)
         }
     }
 

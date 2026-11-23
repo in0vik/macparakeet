@@ -354,6 +354,7 @@ CREATE INDEX idx_transcriptions_status_created_at ON transcriptions(status, crea
 - `language` stores the normalized detected/specified STT language code when available. New transcription service rows start unknown and are filled from the STT result; legacy/default rows may still contain `en`.
 - `speakerCount` and `speakers` are nullable, populated only when diarization is available (v0.4).
 - `filePath` is nullable because the original file may be moved or deleted after transcription.
+- For file promises accepted from apps such as Voice Memos, `filePath` points to an app-owned copy inside `imported-recordings/<drop UUID>/`. Deleting the transcription removes that copy and prunes the drop folder when it is empty. Regular Finder drops keep their external file paths.
 - `audioTrackOrdinal` stores the zero-based ordinal among the source file's
   audio streams when the user or CLI explicitly selected one. `NULL` preserves
   legacy/automatic selection and is expected for single-track, URL, podcast,

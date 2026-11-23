@@ -139,11 +139,12 @@ struct TranscribeView: View {
                             youTubeCard
                             PortalDropZone(
                                 isDragging: $viewModel.isDragging,
-                                onDrop: { providers in
-                                    viewModel.handleFileDrop(providers: providers) {
-                                        SoundManager.shared.play(.fileDropped)
-                                    }
+                                onDrop: { urls in
+                                    guard viewModel.transcribeFiles(urls: urls, source: .dragDrop) else { return false }
+                                    SoundManager.shared.play(.fileDropped)
+                                    return true
                                 },
+                                onImportFailure: { viewModel.setError(message: "Could not import the dropped recording.") },
                                 onBrowse: { openFilePicker() }
                             )
                         }
@@ -180,11 +181,6 @@ struct TranscribeView: View {
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .onDrop(of: [.fileURL], isTargeted: $viewModel.isDragging) { providers in
-                viewModel.handleFileDrop(providers: providers) {
-                    SoundManager.shared.play(.fileDropped)
-                }
-            }
         }
     }
 

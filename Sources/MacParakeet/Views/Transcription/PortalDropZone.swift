@@ -4,7 +4,8 @@ import SwiftUI
 /// "Portal" effect: lifts, glows, particles drift on hover; contracts on file drop.
 struct PortalDropZone: View {
     @Binding var isDragging: Bool
-    let onDrop: ([NSItemProvider]) -> Bool
+    let onDrop: ([URL]) -> Bool
+    let onImportFailure: () -> Void
     let onBrowse: () -> Void
 
     @State private var browseHovered = false
@@ -25,31 +26,36 @@ struct PortalDropZone: View {
 
             // Content
             VStack(spacing: DesignSystem.Spacing.md) {
-                // Merkaba — state-reactive
-                ZStack {
-                    if isDragging {
-                        ParticleField(
-                            particleCount: 6,
-                            tintColor: DesignSystem.Colors.accent,
-                            opacity: 0.25,
-                            driftDirection: .up
+                VStack(spacing: DesignSystem.Spacing.md) {
+                    ZStack {
+                        if isDragging {
+                            ParticleField(
+                                particleCount: 6,
+                                tintColor: DesignSystem.Colors.accent,
+                                opacity: 0.25,
+                                driftDirection: .up
+                            )
+                            .frame(width: 120, height: 120)
+                        }
+
+                        MeditativeMerkabaView(
+                            size: 80,
+                            revolutionDuration: 6.0,
+                            tintColor: DesignSystem.Colors.accent
                         )
-                        .frame(width: 120, height: 120)
+                        .opacity(isDragging ? 0.9 : 0.7)
+                        .animation(.easeInOut(duration: 0.3), value: isDragging)
                     }
 
-                    MeditativeMerkabaView(
-                        size: 80,
-                        revolutionDuration: 6.0,
-                        tintColor: DesignSystem.Colors.accent
-                    )
-                    .opacity(isDragging ? 0.9 : 0.7)
-                    .animation(.easeInOut(duration: 0.3), value: isDragging)
+                    Text("Drop a file to transcribe")
+                        .font(DesignSystem.Typography.pageTitle)
+                        .foregroundStyle(isDragging ? DesignSystem.Colors.accent : .primary)
                 }
-
-                // Call to action
-                Text("Drop a file to transcribe")
-                    .font(DesignSystem.Typography.pageTitle)
-                    .foregroundStyle(isDragging ? DesignSystem.Colors.accent : .primary)
+                .frame(maxWidth: .infinity)
+                .overlay {
+                    PromisedRecordingDropTarget(
+                        isTargeted: $isDragging, onFiles: onDrop, onFailure: onImportFailure)
+                }
 
                 // Browse button
                 Button(action: onBrowse) {
@@ -88,11 +94,8 @@ struct PortalDropZone: View {
             .padding(.vertical, DesignSystem.Spacing.xl)
         }
         .frame(minHeight: 220)
-        .onDrop(of: [.fileURL], isTargeted: $isDragging) { providers in
-            onDrop(providers)
-        }
         .animation(DesignSystem.Animation.portalLift, value: isDragging)
         .accessibilityLabel("File drop zone")
-        .accessibilityHint("Drop an audio or video file to start transcription")
+        .accessibilityHint("Drop an audio or video file, or a recording from Voice Memos, to start transcription")
     }
 }

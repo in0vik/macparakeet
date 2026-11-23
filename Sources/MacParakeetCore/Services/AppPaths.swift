@@ -56,6 +56,10 @@ public enum AppPaths {
         "\(appSupportDir)/youtube-downloads"
     }
 
+    public static var importedRecordingsDir: String {
+        "\(appSupportDir)/imported-recordings"
+    }
+
     /// Default audio/artifact storage directory for meeting recordings.
     public static var defaultMeetingRecordingsDir: String {
         "\(appSupportDir)/meeting-recordings"
