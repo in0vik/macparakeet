@@ -3795,7 +3795,7 @@ final class TranscriptionViewModelTests: XCTestCase {
         let option = try XCTUnwrap(viewModel.retranscriptionEngineOption(for: original))
 
         XCTAssertEqual(option.primaryEngine, SpeechEngineSelection(engine: .whisper, language: "ko"))
-        XCTAssertEqual(option.choices.map(\.selection.engine), [.whisper, .parakeet, .nemotron, .cohere])
+        XCTAssertEqual(option.choices.map(\.selection.engine), [.whisper, .parakeet, .nemotron, .cohere, .gemini])
         XCTAssertTrue(try retranscriptionChoice(.whisper, in: option).isPrimary)
         XCTAssertTrue(try retranscriptionChoice(.parakeet, in: option).isAvailable)
         XCTAssertTrue(try retranscriptionChoice(.nemotron, in: option).isAvailable)
@@ -3878,7 +3878,7 @@ final class TranscriptionViewModelTests: XCTestCase {
         let option = try XCTUnwrap(viewModel.retranscriptionEngineOption(for: original))
 
         XCTAssertEqual(option.primaryEngine, SpeechEngineSelection(engine: .whisper, language: "ja"))
-        XCTAssertEqual(option.choices.map(\.selection.engine), [.whisper, .parakeet, .nemotron, .cohere])
+        XCTAssertEqual(option.choices.map(\.selection.engine), [.whisper, .parakeet, .nemotron, .cohere, .gemini])
         XCTAssertEqual(
             try retranscriptionChoice(.parakeet, in: option).selection,
             SpeechEngineSelection(engine: .parakeet)
@@ -4249,7 +4249,7 @@ final class TranscriptionViewModelTests: XCTestCase {
 
         let option = try XCTUnwrap(viewModel.retranscriptionEngineOption(for: original))
 
-        XCTAssertEqual(option.choices.map(\.selection.engine), [.parakeet, .nemotron, .whisper, .cohere])
+        XCTAssertEqual(option.choices.map(\.selection.engine), [.parakeet, .nemotron, .whisper, .cohere, .gemini])
         XCTAssertTrue(try retranscriptionChoice(.parakeet, in: option).isPrimary)
         XCTAssertTrue(try retranscriptionChoice(.whisper, in: option).isAvailable)
         let nemotron = try retranscriptionChoice(.nemotron, in: option)
@@ -4282,7 +4282,7 @@ final class TranscriptionViewModelTests: XCTestCase {
 
         let option = try XCTUnwrap(viewModel.retranscriptionEngineOption(for: original))
 
-        XCTAssertEqual(option.choices.map(\.selection.engine), [.parakeet, .nemotron, .whisper, .cohere])
+        XCTAssertEqual(option.choices.map(\.selection.engine), [.parakeet, .nemotron, .whisper, .cohere, .gemini])
         XCTAssertTrue(try retranscriptionChoice(.nemotron, in: option).isAvailable)
         XCTAssertNil(try retranscriptionChoice(.nemotron, in: option).unavailableReason)
         XCTAssertTrue(try retranscriptionChoice(.whisper, in: option).isAvailable)
@@ -4350,7 +4350,7 @@ final class TranscriptionViewModelTests: XCTestCase {
 
         let option = try XCTUnwrap(viewModel.retranscriptionEngineOption(for: original))
 
-        XCTAssertEqual(option.choices.map(\.selection.engine), [.nemotron, .parakeet, .whisper, .cohere])
+        XCTAssertEqual(option.choices.map(\.selection.engine), [.nemotron, .parakeet, .whisper, .cohere, .gemini])
         XCTAssertTrue(try retranscriptionChoice(.nemotron, in: option).isPrimary)
         let whisper = try retranscriptionChoice(.whisper, in: option)
         XCTAssertFalse(whisper.isAvailable)
@@ -4391,7 +4391,7 @@ final class TranscriptionViewModelTests: XCTestCase {
         let option = try XCTUnwrap(viewModel.retranscriptionEngineOption(for: original))
 
         XCTAssertEqual(option.primaryEngine, SpeechEngineSelection(engine: .parakeet))
-        XCTAssertEqual(option.choices.map(\.selection.engine), [.parakeet, .nemotron, .whisper, .cohere])
+        XCTAssertEqual(option.choices.map(\.selection.engine), [.parakeet, .nemotron, .whisper, .cohere, .gemini])
         XCTAssertEqual(
             try retranscriptionChoice(.nemotron, in: option).selection,
             SpeechEngineSelection(engine: .nemotron, language: "en-US")
@@ -4429,7 +4429,7 @@ final class TranscriptionViewModelTests: XCTestCase {
         let option = try XCTUnwrap(viewModel.retranscriptionEngineOption(for: original))
 
         XCTAssertEqual(option.primaryEngine, SpeechEngineSelection(engine: .whisper, language: "ko"))
-        XCTAssertEqual(option.choices.map(\.selection.engine), [.whisper, .parakeet, .nemotron, .cohere])
+        XCTAssertEqual(option.choices.map(\.selection.engine), [.whisper, .parakeet, .nemotron, .cohere, .gemini])
         XCTAssertEqual(
             try retranscriptionChoice(.parakeet, in: option).selection,
             SpeechEngineSelection(engine: .parakeet)

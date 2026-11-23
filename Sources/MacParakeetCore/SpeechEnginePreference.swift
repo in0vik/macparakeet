@@ -8,6 +8,7 @@ public enum SpeechEnginePreference: String, CaseIterable, Codable, Sendable {
     /// Core ML. A batch, dictation-oriented engine (no live partials, no word
     /// timestamps); see ``CohereTranscribeEngine``.
     case cohere
+    case gemini
 
     public static let defaultsKey = "speechRecognitionEngine"
     /// Optional final engine for file/media transcription and newly started
@@ -28,6 +29,7 @@ public enum SpeechEnginePreference: String, CaseIterable, Codable, Sendable {
     /// supported languages (default English). Stored as a primary subtag ("en",
     /// "fr", …); the engine maps it to `CohereAsrConfig.Language`.
     public static let cohereDefaultLanguageKey = "cohereDefaultLanguage"
+    public static let geminiWordTimestampsKey = "geminiWordTimestamps"
 
     /// New users stay on the `v3` build for the default local coverage lane.
     /// `v2` (English-only) is surfaced as a clearly-labeled opt-in.
@@ -54,6 +56,8 @@ public enum SpeechEnginePreference: String, CaseIterable, Codable, Sendable {
             "Whisper"
         case .cohere:
             "Cohere"
+        case .gemini:
+            "Google Gemini"
         }
     }
 
@@ -65,7 +69,7 @@ public enum SpeechEnginePreference: String, CaseIterable, Codable, Sendable {
             .whisper
         case .whisper:
             .parakeet
-        case .cohere:
+        case .cohere, .gemini:
             .parakeet
         }
     }
@@ -623,7 +627,7 @@ public struct SpeechEngineSelection: Codable, Equatable, Sendable {
     public init(engine: SpeechEnginePreference, language: String? = nil) {
         self.engine = engine
         self.language = switch engine {
-        case .parakeet:
+        case .parakeet, .gemini:
             nil
         case .nemotron:
             SpeechEnginePreference.normalizeNemotronLanguage(language)
@@ -662,7 +666,7 @@ public struct SpeechEngineSelection: Codable, Equatable, Sendable {
         defaults: UserDefaults
     ) -> SpeechEngineSelection {
         let language: String? = switch engine {
-        case .parakeet:
+        case .parakeet, .gemini:
             nil
         case .nemotron:
             SpeechEnginePreference.nemotronDefaultLanguage(defaults: defaults)

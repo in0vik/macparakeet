@@ -737,6 +737,8 @@ func loadSpeechStackStatus(
             whisperDownloaded
         case .cohere:
             cohereDownloaded
+        case .gemini:
+            true
         }
 
     async let speechRuntimeReady = sttClient.isReady()

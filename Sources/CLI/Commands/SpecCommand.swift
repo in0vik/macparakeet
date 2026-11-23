@@ -346,7 +346,7 @@ private extension CLISpecCommand {
                 CLISpecParameter.option(
                     "--mode", valueName: "raw|clean|app-default", summary: "Text processing mode for this run."),
                 CLISpecParameter.option(
-                    "--engine", valueName: "parakeet|nemotron|whisper|cohere|app-default",
+                    "--engine", valueName: "parakeet|nemotron|whisper|cohere|gemini|app-default",
                     summary: "Speech engine for this run."),
                 CLISpecParameter.option(
                     "--language", valueName: "CODE",
@@ -403,7 +403,7 @@ private extension CLISpecCommand {
                 CLISpecParameter.option(
                     "--mode", valueName: "raw|clean|app-default", summary: "Text processing mode for this rerun."),
                 CLISpecParameter.option(
-                    "--engine", valueName: "parakeet|nemotron|whisper|cohere|app-default",
+                    "--engine", valueName: "parakeet|nemotron|whisper|cohere|gemini|app-default",
                     summary: "Speech engine for this rerun."),
                 CLISpecParameter.option(
                     "--language", valueName: "CODE",

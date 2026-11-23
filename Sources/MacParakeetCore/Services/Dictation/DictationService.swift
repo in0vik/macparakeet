@@ -52,11 +52,11 @@ private struct LiveDictationTranscriptionState: Sendable {
     let partialContinuation: AsyncStream<String>.Continuation
     let partialTask: Task<Void, Never>
     let task: Task<Void, Never>
+    let usesLiveFinal: Bool
     /// Set when the live stream is no longer a faithful rendition of the
     /// recorded WAV (backpressure dropped samples, or the pre-roll was
-    /// discarded from the file after being streamed). Diagnostic only: live
-    /// partials are display-only and the final dictation result always comes
-    /// from recorded-file transcription.
+    /// discarded from the file after being streamed). A degraded Gemini
+    /// session falls back to the complete recorded file.
     let degradeReason: OSAllocatedUnfairLock<String?>
 
     func markDegraded(reason: String) {
@@ -652,9 +652,10 @@ public actor DictationService: DictationServiceProtocol {
             try rejectUnavailableCaptureIfNeeded(captureHealth, audioURL: audioURL)
             let device = await audioProcessor.recordingDeviceInfo
             await cancelDisplayPreview(sessionID: currentSession, clearText: false)
-            // Live partials are display-only, so stop retires the session
-            // without a final pass. Recorded-file STT queues behind it.
-            await cancelLiveDictationTranscription(sessionID: currentSession, clearText: false)
+            let liveFinal = await finishGeminiDictationIfComplete(sessionID: currentSession)
+            if liveFinal == nil {
+                await cancelLiveDictationTranscription(sessionID: currentSession, clearText: false)
+            }
             startPermit.signal()
             holdingStartPermit = false
             logger.debug(
@@ -666,7 +667,8 @@ public actor DictationService: DictationServiceProtocol {
                     capturedDurationMs: capturedDurationMs,
                     formatterContext: formatterContext,
                     aiFormatterEnabled: sessionFormatterEnabled,
-                    captureMs: captureMs
+                    captureMs: captureMs,
+                    liveFinal: liveFinal
                 )
             }
             // Guard against reentrancy: a new session may have started during
@@ -1368,9 +1370,9 @@ public actor DictationService: DictationServiceProtocol {
             let sttSessionID = try await liveTranscriber.beginLiveDictationTranscription { partial in
                 partialContinuation.yield(partial)
             }
-            // The session is always cancelled, never flushed. A live final
-            // would be discarded (the recorded WAV is the final source), and
-            // flushing it cost an inference pass that could stall stop.
+            let attribution = await (sttTranscriber as? any SpeechEngineTelemetryAttributing)?
+                .currentSpeechEngineTelemetryAttribution()
+            let usesLiveFinal = attribution?.speechEngine == .gemini
             let task = Task { [liveTranscriber, sttSessionID] in
                 do {
                     for await samples in stream {
@@ -1381,12 +1383,21 @@ public actor DictationService: DictationServiceProtocol {
                         )
                     }
                 } catch is CancellationError {
+                    await liveTranscriber.cancelLiveDictationTranscription(sessionID: sttSessionID)
+                    return
                 } catch {
+                    degradeReason.withLock { current in
+                        if current == nil { current = "append_failed" }
+                    }
                     AudioCaptureDiagnostics.append(
                         "dictation_live_transcribe_failed \(AudioCaptureDiagnostics.errorFields(error))"
                     )
+                    await liveTranscriber.cancelLiveDictationTranscription(sessionID: sttSessionID)
+                    return
                 }
-                await liveTranscriber.cancelLiveDictationTranscription(sessionID: sttSessionID)
+                if !usesLiveFinal {
+                    await liveTranscriber.cancelLiveDictationTranscription(sessionID: sttSessionID)
+                }
             }
 
             liveTranscriptionState = LiveDictationTranscriptionState(
@@ -1396,6 +1407,7 @@ public actor DictationService: DictationServiceProtocol {
                 partialContinuation: partialContinuation,
                 partialTask: partialTask,
                 task: task,
+                usesLiveFinal: usesLiveFinal,
                 degradeReason: degradeReason
             )
             AudioCaptureDiagnostics.append("dictation_live_transcribe_started engine=native")
@@ -1644,6 +1656,32 @@ public actor DictationService: DictationServiceProtocol {
         }
     }
 
+    private func finishGeminiDictationIfComplete(sessionID: Int) async -> STTResult? {
+        guard let state = liveTranscriptionState, state.dictationSessionID == sessionID, state.usesLiveFinal,
+            let liveTranscriber = sttTranscriber as? any STTLiveDictationTranscribing
+        else { return nil }
+        state.sampleContinuation.finish()
+        guard await Self.waitForDrain(state.task, timeout: liveDictationCancellationTimeout),
+            state.degradeReason.withLock({ $0 }) == nil,
+            liveTranscriptionState?.dictationSessionID == sessionID
+        else { return nil }
+        do {
+            let final = try await liveTranscriber.finishLiveDictationTranscription(sessionID: state.sttSessionID)
+            guard liveTranscriptionState?.dictationSessionID == sessionID else { return nil }
+            liveTranscriptionState = nil
+            state.partialContinuation.finish()
+            state.partialTask.cancel()
+            guard final.engine == .gemini, !final.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            else { return nil }
+            return final
+        } catch {
+            AudioCaptureDiagnostics.append(
+                "dictation_gemini_live_final_failed \(AudioCaptureDiagnostics.errorFields(error))"
+            )
+            return nil
+        }
+    }
+
     /// Retires the take's live session. The wait is bounded: a native append
     /// or cancel that never returns must not hold stop, dismiss, or restart
     /// (issue #1131). A stalled session keeps its scheduler reservation, so a
@@ -1840,7 +1878,8 @@ public actor DictationService: DictationServiceProtocol {
         formatterContext: AppPromptContext?,
         aiFormatterEnabled: Bool,
         status: Dictation.DictationStatus = .completed,
-        captureMs: Int? = nil
+        captureMs: Int? = nil,
+        liveFinal: STTResult? = nil
     ) async throws -> DictationResult {
         let transcribeStartedAt = Date()
         // Track whether the audio file is consumed (moved or explicitly deleted).
@@ -1857,7 +1896,11 @@ public actor DictationService: DictationServiceProtocol {
         )
         let result: STTResult
         do {
-            result = try await sttTranscriber.transcribe(audioPath: audioURL.path, job: .dictation)
+            if let liveFinal {
+                result = liveFinal
+            } else {
+                result = try await sttTranscriber.transcribe(audioPath: audioURL.path, job: .dictation)
+            }
         } catch {
             if status == .completed { try Task.checkCancellation() }
             // A normal stop keeps its recording in History when STT fails, so

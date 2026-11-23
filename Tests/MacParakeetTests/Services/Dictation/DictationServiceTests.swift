@@ -1683,6 +1683,52 @@ final class DictationServiceTests: XCTestCase {
         XCTAssertEqual(operation["error_type"], "AudioProcessorError.inputUnavailable.no_input_buffers")
     }
 
+    func testStopRecordingReusesGeminiLiveFinalWithoutATranscriptionRequest() async throws {
+        service = DictationService(
+            audioProcessor: mockAudio,
+            sttTranscriber: mockSTT,
+            dictationRepo: dictationRepo,
+            shouldAttemptLiveDictationTranscription: { true }
+        )
+        await mockSTT.configureTelemetryAttribution(
+            .init(speechEngine: .gemini, engineVariant: nil, language: nil))
+        await mockSTT.configureLive(result: STTResult(text: "Gemini live final", engine: .gemini))
+        await mockSTT.configure(result: STTResult(text: "file fallback"))
+
+        try await service.startRecording()
+        await mockAudio.emitLiveSamples([0.1, 0.2, 0.3])
+        let result = try await service.stopRecording()
+
+        XCTAssertEqual(result.dictation.rawTranscript, "Gemini live final")
+        let batchCalls = await mockSTT.transcribeCallCount
+        let liveFinishes = await mockSTT.liveFinishCallCount
+        XCTAssertEqual(batchCalls, 0)
+        XCTAssertEqual(liveFinishes, 1)
+    }
+
+    func testStopRecordingTranscribesSavedAudioWhenGeminiLiveFinalFails() async throws {
+        service = DictationService(
+            audioProcessor: mockAudio,
+            sttTranscriber: mockSTT,
+            dictationRepo: dictationRepo,
+            shouldAttemptLiveDictationTranscription: { true }
+        )
+        await mockSTT.configureTelemetryAttribution(
+            .init(speechEngine: .gemini, engineVariant: nil, language: nil))
+        await mockSTT.configureLive(finishError: GeminiSpeechError.liveIncomplete)
+        await mockSTT.configure(result: STTResult(text: "file fallback", engine: .gemini))
+
+        try await service.startRecording()
+        await mockAudio.emitLiveSamples([0.1, 0.2, 0.3])
+        let result = try await service.stopRecording()
+
+        XCTAssertEqual(result.dictation.rawTranscript, "file fallback")
+        let batchCalls = await mockSTT.transcribeCallCount
+        let liveFinishes = await mockSTT.liveFinishCallCount
+        XCTAssertEqual(batchCalls, 1)
+        XCTAssertEqual(liveFinishes, 1)
+    }
+
     func testStopRecordingUsesRecordedFileEvenWhenLiveFinalIsAvailable() async throws {
         service = DictationService(
             audioProcessor: mockAudio,

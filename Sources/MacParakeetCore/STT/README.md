@@ -8,7 +8,8 @@
 > engine with two builds — multilingual (Nemotron 3.5, default) and an
 > English-only streaming build (Nemotron Speech Streaming EN 0.6B);
 > WhisperKit is optional for broad language coverage; Cohere Transcribe is an
-> opt-in batch-only accuracy engine.
+> opt-in batch-only accuracy engine. Google Gemini is an opt-in cloud
+> engine for streaming dictation, meeting preview, and saved audio.
 
 ## Entry point
 
@@ -257,6 +258,20 @@ eligible meeting preview route there. The Advanced final override is
 persist-only and loads lazily when a durable-audio job reaches the scheduler;
 when set per-job, only that job uses the requested engine. Cohere dictation
 remains record-then-transcribe and does not enter live-preview paths.
+
+**Gemini speech.** The engine resolves the existing Google Gemini Keychain
+credential at execution time. It also accepts `GEMINI_API_KEY` or
+`GEMINI_PRIMARY_API_KEY` from the launching process. Live dictation reuses the
+stream's final result when all captured samples reached it. Backpressure,
+network failures, or an unfinished stream fall back to the recorded WAV.
+Long dictation rolls over to a fresh Live session before the service limit.
+Meeting preview feeds the scheduler's audio chunks through Gemini Live and
+uses the chunk timeline to place returned text. Final meeting transcription is
+a separate pass, so selecting both cloud routes can send parts of a meeting
+twice. For saved audio, the engine sends at most one request per nonoverlapping
+chunk of up to 150 seconds. It joins the audible parts of the chunk before
+upload and restores their original offsets for optional word timestamps.
+Timestamps are off by default because they can reduce recognition accuracy.
 
 **Active meetings hold an engine lease.** Once a meeting recording
 starts, its Live Speech selection is captured by the session lease and its

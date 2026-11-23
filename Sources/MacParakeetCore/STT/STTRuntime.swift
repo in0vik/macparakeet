@@ -264,6 +264,7 @@ public actor STTRuntime: STTRuntimeProtocol {
     /// created on first use; sibling of the other speech engines. Batch-only
     /// (no live dictation / preview path).
     private var cohereEngine: CohereTranscribeEngine?
+    private lazy var geminiEngine = GeminiTranscribeEngine()
     private let defaults: UserDefaults
     private let physicalMemoryBytes: @Sendable () -> UInt64
     private var speechEngineActivity = SpeechEngineActivity()
@@ -378,6 +379,11 @@ public actor STTRuntime: STTRuntimeProtocol {
                 language: selection.language,
                 onProgress: onProgress
             )
+        case .gemini:
+            return try await geminiEngine.transcribe(
+                audioPath: audioPath, job: job, onProgress: onProgress,
+                wordTimestamps: defaults.bool(forKey: SpeechEnginePreference.geminiWordTimestampsKey)
+            )
         }
     }
 
@@ -404,7 +410,7 @@ public actor STTRuntime: STTRuntimeProtocol {
             return try await transcribeWhisperPreview(samples: samples, language: selection.language)
         case .nemotron:
             throw tailPreviewUnsupportedError(for: capabilities.key)
-        case .cohere:
+        case .cohere, .gemini:
             throw tailPreviewUnsupportedError(for: capabilities.key)
         }
     }
@@ -455,6 +461,9 @@ public actor STTRuntime: STTRuntimeProtocol {
         case .cohere:
             // Batch engine — no native live-partial path.
             throw STTLiveDictationTranscriptionError.unsupportedEngine(.cohere)
+        case .gemini:
+            engine = geminiEngine
+            language = nil
         }
         guard await engine.isReady() else {
             throw STTLiveDictationTranscriptionError.modelNotReady
@@ -1320,6 +1329,8 @@ public actor STTRuntime: STTRuntimeProtocol {
             case .cohere:
                 let engine = try ensureCohereEngine()
                 try await engine.prepare(onProgress: onProgress)
+            case .gemini:
+                try await geminiEngine.prepare()
             }
 
             let elapsed = start.duration(to: .now)
@@ -1465,6 +1476,8 @@ public actor STTRuntime: STTRuntimeProtocol {
             return await whisperEngine?.isReady() ?? false
         case .cohere:
             return await cohereEngine?.isReady() ?? false
+        case .gemini:
+            return await geminiEngine.isReady()
         case .parakeet(let variant):
             // Parakeet engine: Unified reports through its own engine actor.
             if variant.usesUnifiedEngine {
@@ -1644,6 +1657,8 @@ public actor STTRuntime: STTRuntimeProtocol {
         case .cohere:
             let engine = try ensureCohereEngine()
             try await engine.prepare(onProgress: onProgress)
+        case .gemini:
+            try await geminiEngine.prepare()
         }
 
         // Prepare is not cancellable (Core ML / `aned`). If Settings already
@@ -2512,7 +2527,7 @@ public actor STTRuntime: STTRuntimeProtocol {
 
     private func selectableDefaultLanguage(for engine: SpeechEnginePreference) -> String? {
         switch engine {
-        case .parakeet:
+        case .parakeet, .gemini:
             nil
         case .nemotron:
             SpeechEnginePreference.nemotronDefaultLanguage(defaults: defaults)
@@ -2565,6 +2580,8 @@ public actor STTRuntime: STTRuntimeProtocol {
             .whisper(WhisperModelVariant.normalize(whisperModelVariant) ?? .largeV3Turbo632MB)
         case .cohere:
             .cohere
+        case .gemini:
+            .gemini
         }
     }
 
@@ -2580,6 +2597,8 @@ public actor STTRuntime: STTRuntimeProtocol {
             STTError.transcriptionFailed("Whisper supports display-preview transcription.")
         case .cohere:
             STTError.transcriptionFailed("Cohere uses record-then-transcribe dictation and does not support display-preview transcription.")
+        case .gemini:
+            STTError.transcriptionFailed("Gemini uses a live transcription session for dictation.")
         }
     }
 

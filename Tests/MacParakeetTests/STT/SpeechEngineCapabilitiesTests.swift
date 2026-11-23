@@ -27,6 +27,7 @@ final class SpeechEngineCapabilitiesTests: XCTestCase {
             .parakeet(.unified),
             .nemotron(.multilingual1120),
             .nemotron(.english1120),
+            .gemini,
         ]))
     }
 

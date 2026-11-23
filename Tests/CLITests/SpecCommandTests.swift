@@ -406,7 +406,7 @@ final class SpecCommandTests: XCTestCase {
         let speechEngine = try XCTUnwrap(configKeys.first { ($0["key"] as? String) == "speech-engine" })
         XCTAssertEqual(
             speechEngine["allowedValues"] as? [String],
-            ["parakeet", "nemotron", "whisper", "cohere"]
+            ["parakeet", "nemotron", "whisper", "cohere", "gemini"]
         )
 
         let cohereLanguage = try XCTUnwrap(configKeys.first { ($0["key"] as? String) == "cohere-language" })
@@ -483,7 +483,7 @@ final class SpecCommandTests: XCTestCase {
         XCTAssertTrue(optionNames.contains("--database"))
 
         let engine = try XCTUnwrap(options.first { ($0["name"] as? String) == "--engine" })
-        XCTAssertEqual(engine["valueName"] as? String, "parakeet|nemotron|whisper|cohere|app-default")
+        XCTAssertEqual(engine["valueName"] as? String, "parakeet|nemotron|whisper|cohere|gemini|app-default")
         let format = try XCTUnwrap(options.first { ($0["name"] as? String) == "--format" })
         XCTAssertEqual(format["valueName"] as? String, "text|transcript|json|srt|vtt|dapt")
         let audioTrack = try XCTUnwrap(options.first { ($0["name"] as? String) == "--audio-track" })

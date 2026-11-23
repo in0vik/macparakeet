@@ -374,6 +374,8 @@ final class LongMeetingPipelineBenchmarkTests: XCTestCase {
             guard CohereTranscribeEngine.isModelCached() else {
                 throw BenchmarkError.missingModel("Cohere Transcribe is not downloaded.")
             }
+        case .gemini:
+            throw BenchmarkError.invalidFixture("The local meeting benchmark requires an on-device speech engine.")
         }
 
         guard DiarizationService.isModelCached() else {

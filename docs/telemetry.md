@@ -43,7 +43,7 @@ provides an offline JSON inspection path for agents.
 - **Non-identifying by design** — No persistent user ID, no device fingerprint, no IP storage. Session IDs reset every app launch.
 - **Transparent** — Users can see what's collected and opt out in Settings
 - **Minimal** — Collect what helps improve the product, nothing more
-- **Local-first still** — Audio never leaves the device. Only non-identifying usage signals are sent.
+- **Local-first** — Telemetry sends only non-identifying usage signals. Google Gemini speech is a separate opt-in feature that sends audio for the selected speech route.
 - **Fully optional** — Turning telemetry off in Settings discards queued unsent telemetry, sends only the final `telemetry_opted_out` event, and then stops queuing new network telemetry. A request already in flight may complete. Local `os.Logger` diagnostics remain on-device unless a user explicitly exports them.
 
 **Privacy promise (updated):**

@@ -1014,8 +1014,8 @@ public final class TranscriptionViewModel {
         // retranscription choice.
         let defaultOrder: [SpeechEnginePreference] =
             AppFeatures.cohereEngineEnabled
-            ? [.parakeet, .nemotron, .whisper, .cohere]
-            : [.parakeet, .nemotron, .whisper]
+            ? [.parakeet, .nemotron, .whisper, .cohere, .gemini]
+            : [.parakeet, .nemotron, .whisper, .gemini]
         return [primary] + defaultOrder.filter { $0 != primary }
     }
 
@@ -1035,6 +1035,8 @@ public final class TranscriptionViewModel {
             return isCohereModelDownloaded()
                 ? nil
                 : "Download Cohere Transcribe in Settings before trying Cohere."
+        case .gemini:
+            return nil
         }
     }
 
@@ -1067,6 +1069,8 @@ public final class TranscriptionViewModel {
             // retranscription must carry the user's chosen language explicitly,
             // exactly as Nemotron/Whisper do above.
             return SpeechEnginePreference.cohereDefaultLanguage(defaults: defaults)
+        case .gemini:
+            return nil
         }
     }
 
@@ -1790,6 +1794,8 @@ public final class TranscriptionViewModel {
                 return "Whisper \(friendly) \u{00B7} Local Core ML"
             case .cohere:
                 return "Cohere Transcribe \u{00B7} Local Core ML"
+            case .gemini:
+                return "Gemini 3.5 Transcribe \u{00B7} Google API"
             }
         case .identifyingSpeakers:
             return

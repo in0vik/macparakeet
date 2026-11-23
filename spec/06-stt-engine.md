@@ -2,11 +2,23 @@
 
 > Status: **ACTIVE** - Authoritative, current
 
-MacParakeet's default speech engine family is Parakeet TDT 0.6B via FluidAudio CoreML on Apple's Neural Engine (ANE). Multilingual v3 is the default build; English-only v2 is an opt-in Parakeet build for users who want a faster no-auto-detect path; and an English-only Parakeet Unified build adds native streaming dictation with built-in punctuation, capitalization, and token-derived word timestamps. Orukeet is an optional Parakeet preview of a third-party v3 adaptation, and v3 remains the default. Nemotron is available as an opt-in Beta local engine (multilingual Nemotron 3.5 by default, plus an English-only second build), WhisperKit remains the mature optional fallback for languages Parakeet/Nemotron do not cover well enough, and Cohere Transcribe is an opt-in local accuracy engine for record-then-transcribe jobs. All speech engines run on-device; there is no cloud STT path.
+MacParakeet's default speech engine family is Parakeet TDT 0.6B via FluidAudio CoreML on Apple's Neural Engine (ANE). Multilingual v3 is the default build; English-only v2 is an opt-in Parakeet build for users who want a faster no-auto-detect path; and an English-only Parakeet Unified build adds native streaming dictation with built-in punctuation, capitalization, and token-derived word timestamps. Orukeet is an optional Parakeet preview of a third-party v3 adaptation, and v3 remains the default. Nemotron is available as an opt-in Beta local engine (multilingual Nemotron 3.5 by default, plus an English-only second build), WhisperKit remains the mature optional fallback for languages Parakeet/Nemotron do not cover well enough, and Cohere Transcribe is an opt-in local accuracy engine for record-then-transcribe jobs. Speech runs on-device by default. This fork also offers Google Gemini as an opt-in cloud speech engine.
 
 ---
 
 ## Speech Engines
+
+### Google Gemini (opt-in)
+
+Live dictation uses `gemini-3.5-transcribe-live` over WebSocket and displays
+partial text during capture. On a complete stream the app uses its final
+text for dictation. The local recording supplies the fallback when the live
+stream is incomplete. Meeting preview uses the same Live endpoint on
+scheduler-provided chunks. Saved audio uses `gemini-3.5-transcribe`, with
+automatic language detection and an optional word timing mode. The app
+splits at nearby pauses where possible, skips long near-silent regions, and
+positions returned word offsets against the original recording. The selection
+explicitly sends speech audio to Google on the selected route.
 
 ### Parakeet Default
 

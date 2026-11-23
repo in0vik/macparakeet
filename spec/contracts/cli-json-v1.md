@@ -580,6 +580,12 @@ segments and additive artifact paths, command-level JSON failure envelopes, and
 
 `models list` may include the additive `parakeet-orukeet` entry. Its engine is `parakeet` and variant is `orukeet`; it does not change the default v3 selection. `models download/select/delete parakeet-orukeet`, `config set parakeet-model orukeet`, and `transcribe --parakeet-model orukeet` address the independent preview cache. Transcription results attribute this model as `engineVariant: "orukeet"`, never `v3`.
 
+## Google Gemini speech engine
+
+`transcribe --engine gemini` uses Google Gemini for saved audio and can report
+`engine: "gemini"` and `engineVariant: "gemini-3.5-transcribe"`. The
+`gemini-word-timestamps` config key enables the optional word timing mode.
+
 ## When this changes
 
 Update this file, `Sources/CLI/CHANGELOG.md`, `docs/cli-testing.md`,

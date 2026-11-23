@@ -23,6 +23,9 @@ returns an error; only `errSecItemNotFound` means no saved item.
   `PromptsViewModel`, `PromptResultsViewModel`, and model discovery.
 - Other Keychain users of the same store: the CLI, `ShareCredentialStore`,
   licensing, and Voice Control credentials.
+- Google Gemini speech resolves the saved Gemini key when this engine is used.
+  The engine can also use `GEMINI_PRIMARY_API_KEY` or `GEMINI_API_KEY` from the
+  launching process. The key is sent in the Google API request header.
 
 ## Stable behavior
 

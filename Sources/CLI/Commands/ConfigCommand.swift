@@ -35,7 +35,7 @@ struct ConfigCommand: ParsableCommand {
           remove-um-filler          on|off                          default: on
                                     (Clean processing; off keeps
                                     Portuguese/German um)
-          speech-engine             parakeet|nemotron|whisper|cohere default: parakeet
+          speech-engine             parakeet|nemotron|whisper|cohere|gemini default: parakeet
           parakeet-model            v3|v2|unified|orukeet                   default: v3
                                     (v3=supported languages, v2=English
                                     timestamps, unified=readable English timestamps,
@@ -46,6 +46,7 @@ struct ConfigCommand: ParsableCommand {
                                     (multilingual build only)
           whisper-language          auto|<Whisper language code>    default: auto
           cohere-language           <Cohere language code>          default: en (no auto)
+          gemini-word-timestamps    on|off                          default: off
           speaker-detection         on|off                          default: on
           meeting-speaker-detection on|off                          default: on
           custom-vocabulary-boosting on|off                         default: off
@@ -115,8 +116,8 @@ struct ConfigCommand: ParsableCommand {
         ),
         CLIConfigKeySpec(
             key: "speech-engine",
-            valueSyntax: "parakeet|nemotron|whisper|cohere",
-            allowedValues: ["parakeet", "nemotron", "whisper", "cohere"],
+            valueSyntax: "parakeet|nemotron|whisper|cohere|gemini",
+            allowedValues: ["parakeet", "nemotron", "whisper", "cohere", "gemini"],
             summary: "Default speech recognition engine for app-default transcription."
         ),
         CLIConfigKeySpec(
@@ -148,6 +149,12 @@ struct ConfigCommand: ParsableCommand {
             valueSyntax: CohereTranscribeEngine.supportedLanguages.map(\.code).joined(separator: "|"),
             allowedValues: CohereTranscribeEngine.supportedLanguages.map(\.code),
             summary: "Default Cohere Transcribe language; Cohere has no auto-detect."
+        ),
+        CLIConfigKeySpec(
+            key: "gemini-word-timestamps",
+            valueSyntax: "on|off",
+            allowedValues: ["on", "off"],
+            summary: "Request Gemini word timestamps for saved audio. Off by default for recognition accuracy."
         ),
         CLIConfigKeySpec(
             key: "speaker-detection",
@@ -394,6 +401,8 @@ struct ConfigCommand: ParsableCommand {
             return SpeechEnginePreference.whisperDefaultLanguage(defaults: store) ?? WhisperLanguageCatalog.autoCode
         case "cohere-language":
             return SpeechEnginePreference.cohereDefaultLanguage(defaults: store) ?? "en"
+        case "gemini-word-timestamps":
+            return store.bool(forKey: SpeechEnginePreference.geminiWordTimestampsKey) ? "on" : "off"
         case "speaker-detection":
             let on = UserDefaultsAppRuntimePreferences.speakerDiarizationEnabled(defaults: store)
             return on ? "on" : "off"
@@ -514,6 +523,10 @@ struct ConfigCommand: ParsableCommand {
             let language = try parseCohereLanguage(value)
             SpeechEnginePreference.saveCohereDefaultLanguage(language, defaults: store)
             return language
+        case "gemini-word-timestamps":
+            let enabled = try parseBool(value, key: key)
+            store.set(enabled, forKey: SpeechEnginePreference.geminiWordTimestampsKey)
+            return enabled ? "on" : "off"
         case "speaker-detection":
             let parsed = try parseBool(value, key: key)
             store.set(parsed, forKey: UserDefaultsAppRuntimePreferences.speakerDiarizationKey)
@@ -654,7 +667,9 @@ struct ConfigCommand: ParsableCommand {
     static func parseSpeechEngine(_ value: String) throws -> SpeechEnginePreference {
         let raw = value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard let engine = SpeechEnginePreference(rawValue: raw) else {
-            throw ValidationError("Invalid value for speech-engine: '\(value)'. Use parakeet, nemotron, whisper, or cohere.")
+            throw ValidationError(
+                "Invalid value for speech-engine: '\(value)'. Use parakeet, nemotron, whisper, cohere, or gemini."
+            )
         }
         return engine
     }

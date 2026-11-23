@@ -36,6 +36,7 @@ final class ConfigCommandTests: XCTestCase {
             "nemotron-language",
             "whisper-language",
             "cohere-language",
+            "gemini-word-timestamps",
             "speaker-detection",
             "meeting-speaker-detection",
             "custom-vocabulary-boosting",

@@ -107,9 +107,10 @@ and `Services/System/` currently have subsystem rules.
 
 ## Product Rules
 
-- Preserve the local-first posture. Audio/transcripts stay on-device for core
-  dictation, transcription, and meeting recording. Cloud LLMs, media downloads,
-  model/update flows, and telemetry are explicit product surfaces.
+- Preserve the local-first posture. Audio/transcripts stay on-device by
+  default. Selecting the Google Gemini speech engine sends audio on that
+  route to Google. Cloud LLMs, media downloads, model/update flows, and
+  telemetry are explicit product surfaces.
 - Treat the user database and meeting artifacts as user data. Do not delete them
   outside explicit product recovery/discard flows.
 - Keep the product focused. Prefer reliable capture, recovery, durable local

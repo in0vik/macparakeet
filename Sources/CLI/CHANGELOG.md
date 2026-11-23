@@ -94,6 +94,9 @@ by checking exit code first: `2` = misuse, `1` = runtime, `0` = success.
 
 ## [Unreleased]
 
+- Add `transcribe --engine gemini` for cloud speech recognition with Google Gemini.
+- Add `config set gemini-word-timestamps on|off` for optional word timings.
+
 ## [5.2.0] — 2026-11-01 (prepared for the next MacParakeet release)
 
 This version is prepared in source; publication of the app and standalone CLI

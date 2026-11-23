@@ -75,6 +75,16 @@ final class EngineSettingsViewModelTests: XCTestCase {
         }
     }
 
+    func testGeminiWordTimestampsRoundTripThroughEngineDefaults() {
+        let viewModel = makeViewModel()
+        XCTAssertFalse(viewModel.geminiWordTimestamps)
+
+        viewModel.geminiWordTimestamps = true
+
+        XCTAssertTrue(defaults.bool(forKey: SpeechEnginePreference.geminiWordTimestampsKey))
+        XCTAssertTrue(makeViewModel().geminiWordTimestamps)
+    }
+
     func testSelectionDefaultsReadFromSpeechEnginePreferenceHelpers() {
         let vm = makeViewModel()
 

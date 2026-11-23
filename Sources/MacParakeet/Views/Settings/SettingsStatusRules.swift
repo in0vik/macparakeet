@@ -38,6 +38,7 @@ enum SettingsStatusRules {
         case .nemotron: activeStatus = nemotron
         case .whisper: activeStatus = whisper
         case .cohere: activeStatus = cohereStatus
+        case .gemini: return nil
         }
 
         if activeStatus == .notDownloaded {

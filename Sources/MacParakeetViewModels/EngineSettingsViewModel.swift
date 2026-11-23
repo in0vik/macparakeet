@@ -50,6 +50,9 @@ public final class EngineSettingsViewModel {
             Telemetry.send(.settingChanged(setting: .whisperDefaultLanguage))
         }
     }
+    public var geminiWordTimestamps: Bool {
+        didSet { defaults.set(geminiWordTimestamps, forKey: SpeechEnginePreference.geminiWordTimestampsKey) }
+    }
     /// Where Cohere runs its model — `.gpu` (fastest warm latency, pays a
     /// one-time ~2-minute Core ML optimization in the background after each
     /// launch) or `.ane` (slower warm, no startup wait). Persist-only: the
@@ -291,6 +294,7 @@ public final class EngineSettingsViewModel {
         parakeetModelVariant = SpeechEnginePreference.parakeetModelVariant(defaults: defaults)
         nemotronModelVariant = SpeechEnginePreference.nemotronModelVariant(defaults: defaults)
         whisperDefaultLanguage = SpeechEnginePreference.whisperDefaultLanguage(defaults: defaults) ?? "auto"
+        geminiWordTimestamps = defaults.bool(forKey: SpeechEnginePreference.geminiWordTimestampsKey)
         let launchPolicy = CohereTranscribeEngine.ComputePolicy.current(defaults: defaults)
         launchCohereComputePolicy = launchPolicy
         cohereComputePolicy = launchPolicy
@@ -1658,6 +1662,8 @@ public final class EngineSettingsViewModel {
             "Optimizing Whisper for this Mac..."
         case .cohere:
             "Loading Cohere with Core ML..."
+        case .gemini:
+            "Checking the Google Gemini key..."
         }
     }
 

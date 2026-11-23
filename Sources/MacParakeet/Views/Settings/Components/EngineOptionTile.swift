@@ -33,7 +33,7 @@ struct EngineOptionTile: View {
     let tagline: String
     let strengths: [String]
     let helpText: String
-    let modelStatus: SettingsViewModel.LocalModelStatus
+    let modelStatus: SettingsViewModel.LocalModelStatus?
     let isSelected: Bool
     let isBusy: Bool
     let unavailableReason: String?
@@ -232,7 +232,7 @@ struct EngineOptionTile: View {
         let detail: String
 
         static func from(
-            _ status: SettingsViewModel.LocalModelStatus,
+            _ status: SettingsViewModel.LocalModelStatus?,
             needsFirstOptimize: Bool = false,
             unavailableReason: String? = nil
         ) -> StatusInfo {
@@ -241,6 +241,11 @@ struct EngineOptionTile: View {
                     color: DesignSystem.Colors.textSecondary,
                     label: "Unavailable",
                     detail: unavailableReason
+                )
+            }
+            guard let status else {
+                return StatusInfo(
+                    color: DesignSystem.Colors.textSecondary, label: "Cloud", detail: "Google API key required"
                 )
             }
             switch status {

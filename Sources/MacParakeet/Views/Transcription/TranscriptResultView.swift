@@ -1702,6 +1702,8 @@ struct TranscriptResultView: View {
             return "Whisper \(SpeechEnginePreference.friendlyVariantName(variant))"
         case .cohere:
             return "Cohere Transcribe"
+        case .gemini:
+            return "Gemini 3.5 Transcribe"
         }
     }
 
@@ -6518,6 +6520,7 @@ private struct EngineOptionCard: View {
         case .nemotron: "sparkles"
         case .whisper: "globe"
         case .cohere: "waveform"
+        case .gemini: "cloud"
         }
     }
 
@@ -6538,6 +6541,8 @@ private struct EngineOptionCard: View {
             "Broad-language fallback • files and saved audio"
         case .cohere:
             "Batch plain text • no timestamps or speaker labels"
+        case .gemini:
+            "Cloud transcription • sends audio to Google"
         }
     }
 

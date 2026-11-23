@@ -36,6 +36,7 @@ enum TranscribeSpeechEngine: String, ExpressibleByArgument, CaseIterable, Sendab
     case nemotron
     case whisper
     case cohere
+    case gemini
 }
 
 enum TranscribeParakeetModel: String, ExpressibleByArgument, CaseIterable, Sendable {
@@ -105,7 +106,10 @@ struct TranscribeCommand: AsyncParsableCommand, CLITelemetryMetadataProviding {
     @Option(help: "Processing mode: raw, clean, app-default.")
     var mode: TranscribeMode = .appDefault
 
-    @Option(help: "Speech engine: app-default, parakeet, nemotron, whisper, cohere. Parakeet is the local default; app-default follows the saved GUI preference.")
+    @Option(
+        help: "Speech engine: app-default, parakeet, nemotron, whisper, cohere, gemini. "
+            + "Gemini sends audio to Google; app-default follows the saved GUI preference."
+    )
     var engine: TranscribeSpeechEngine = .parakeet
 
     @Option(help: "Language hint for Nemotron, Whisper, or Cohere, such as ko, en, or en-US. Cohere requires a supported language; Parakeet and the English-only Nemotron build ignore this flag.")
@@ -244,7 +248,7 @@ struct TranscribeCommand: AsyncParsableCommand, CLITelemetryMetadataProviding {
                 physicalMemoryBytes: physicalMemoryBytes
             ) ? .parakeet : storedPreference
             language = switch preference {
-            case .parakeet:
+            case .parakeet, .gemini:
                 nil
             case .nemotron:
                 explicitLanguage ?? storedNemotronLanguage
@@ -265,6 +269,9 @@ struct TranscribeCommand: AsyncParsableCommand, CLITelemetryMetadataProviding {
         case .cohere:
             preference = .cohere
             language = explicitLanguage ?? storedCohereLanguage
+        case .gemini:
+            preference = .gemini
+            language = nil
         }
         return SpeechEngineSelection(engine: preference, language: language)
     }
@@ -630,6 +637,10 @@ struct TranscribeCommand: AsyncParsableCommand, CLITelemetryMetadataProviding {
                 )
                 cohereEngine = createdCohereEngine
                 sttTranscriber = createdCohereEngine
+            case .gemini:
+                let client = STTClient(speechEngine: .gemini, defaults: defaults)
+                sttClient = client
+                sttTranscriber = client
             }
             let audioProcessor = AudioProcessor()
             let youtubeDownloader = YouTubeDownloader(audioQuality: {

@@ -55,7 +55,7 @@
 
 ---
 
-MacParakeet combines system-wide dictation, file/media transcription, and meeting recording in one local-first app, with optional selected-text Transforms and agent automation through `macparakeet-cli`. Parakeet v3 is the standard-path local speech engine; locale-aware first-run setup selects WhisperKit instead when the Mac has no preferred English language and prefers Korean, Japanese, Chinese, or Cantonese. Parakeet v2/Unified, Nemotron Beta, Cohere Transcribe, and WhisperKit remain selectable local choices for different language, latency, timestamp, and accuracy needs. Version 0.8.10 is the current stable DMG and bundles CLI 5.1.0. It includes speaker-count selection, transcript find and replace, additional dictation shortcuts, and meeting-capture recovery improvements; see the [0.8.10 release notes](docs/releases/0.8.10/github.md). This source revision adds opt-in Beta meeting recording reminders for the next app release. All speech recognition happens on your Mac; networked AI features are separate and opt-in.
+MacParakeet combines system-wide dictation, file/media transcription, and meeting recording in one local-first app, with optional selected-text Transforms and agent automation through `macparakeet-cli`. Parakeet v3 is the standard-path local speech engine; locale-aware first-run setup selects WhisperKit instead when the Mac has no preferred English language and prefers Korean, Japanese, Chinese, or Cantonese. Parakeet v2/Unified, Nemotron Beta, Cohere Transcribe, and WhisperKit remain selectable local choices for different language, latency, timestamp, and accuracy needs. Version 0.8.10 is the current stable DMG and bundles CLI 5.1.0. It includes speaker-count selection, transcript find and replace, additional dictation shortcuts, and meeting-capture recovery improvements; see the [0.8.10 release notes](docs/releases/0.8.10/github.md). This source revision adds opt-in Beta meeting recording reminders for the next app release. Speech recognition runs on your Mac by default. This fork also offers an opt-in Google Gemini speech engine.
 
 ## Release status
 
@@ -277,7 +277,7 @@ When dictation history is enabled, saved entries retain the raw transcript and a
 
 ## AI Features
 
-AI features are entirely **opt-in** and separate from speech recognition — transcription is always local. Configured providers receive text context (transcripts, notes, selected text, or chat as required by the feature), never captured audio.
+Summaries, chat, formatting, and Transforms are **opt-in** and configured separately from speech recognition. These features send the relevant text to your chosen provider. The optional Google Gemini speech engine sends audio when you select it for a speech route.
 
 **What it does:**
 
@@ -299,9 +299,11 @@ AI features are entirely **opt-in** and separate from speech recognition — tra
 
 ## Privacy
 
-All speech recognition runs locally. Parakeet uses the Neural Engine; optional Nemotron Beta, Cohere Transcribe, and WhisperKit engines also run on-device. Your audio never leaves your Mac.
+To use Gemini speech, save a Google Gemini key in **Settings → AI Provider** and select **Google Gemini** under **Speech Engine**. Use **Advanced transcription → Recordings & files** to pick a separate engine for saved audio, media URLs, and completed meetings. The optional word timestamps setting enables timed exports and lets local diarization label recognized words.
 
-- **No cloud STT.** The model runs on-device. No audio is transmitted.
+The default Parakeet engine uses the Neural Engine. Nemotron Beta, Cohere Transcribe, and WhisperKit also run on-device. The optional Google Gemini engine sends selected audio to Google.
+
+- **Choose where speech runs.** Local engines keep audio on-device. Select Google Gemini to use cloud speech recognition for a route.
 - **No accounts.** No login, no email, no registration.
 - **Opt-out telemetry.** Non-identifying usage analytics and crash reporting go to a self-hosted endpoint only when telemetry is enabled. No persistent IDs, no IP storage, and no transcript/audio content is transmitted. [Source code is right here](Sources/MacParakeetCore/Services/Telemetry/TelemetryService.swift) — verify it yourself.
 - **User-controlled retention.** Temporary working audio is cleaned up by its owning flow. Saved dictation, file/media, and meeting audio follows the relevant storage setting; meeting audio is kept by default. Deleting audio does not imply deleting the transcript.

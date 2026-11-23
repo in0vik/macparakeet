@@ -5,12 +5,13 @@ public enum SpeechEngineVariantKey: Hashable, Sendable, CustomStringConvertible 
     case nemotron(NemotronModelVariant)
     case whisper(WhisperModelVariant)
     case cohere
+    case gemini
 
     public static var allCases: [SpeechEngineVariantKey] {
         ParakeetModelVariant.allCases.map(SpeechEngineVariantKey.parakeet)
             + NemotronModelVariant.allCases.map(SpeechEngineVariantKey.nemotron)
             + WhisperModelVariant.allCases.map(SpeechEngineVariantKey.whisper)
-            + [.cohere]
+            + [.cohere, .gemini]
     }
 
     public var engine: SpeechEnginePreference {
@@ -23,6 +24,8 @@ public enum SpeechEngineVariantKey: Hashable, Sendable, CustomStringConvertible 
             .whisper
         case .cohere:
             .cohere
+        case .gemini:
+            .gemini
         }
     }
 
@@ -34,7 +37,7 @@ public enum SpeechEngineVariantKey: Hashable, Sendable, CustomStringConvertible 
             variant.rawValue
         case .whisper(let variant):
             variant.rawValue
-        case .cohere:
+        case .cohere, .gemini:
             nil
         }
     }
@@ -132,8 +135,8 @@ public struct SpeechEngineCapabilities: Equatable, Sendable {
     public let telemetryIdentity: SpeechEngineTelemetryIdentity
 
     /// Whether the current meeting preview pipeline can render this engine's
-    /// chunk results. Preview segmentation requires word timings today, so keep
-    /// one source of truth until an engine makes these capabilities diverge.
+    /// chunk results. Gemini Live uses captured chunk offsets in preview and
+    /// provides word timings through its file endpoint.
     public var supportsMeetingLivePreview: Bool {
         providesWordTimestamps
     }
@@ -167,7 +170,7 @@ public enum SpeechEngineCapabilityRegistry {
     public static let cohereMinimumMemoryBytes: UInt64 = 16 * 1024 * 1024 * 1024
 
     public static let all: [SpeechEngineCapabilities] =
-        makeParakeetRows() + makeNemotronRows() + makeWhisperRows() + [cohereRow()]
+        makeParakeetRows() + makeNemotronRows() + makeWhisperRows() + [cohereRow(), geminiRow()]
 
     private static let table = Dictionary(uniqueKeysWithValues: all.map { ($0.key, $0) })
 
@@ -217,6 +220,8 @@ public enum SpeechEngineCapabilityRegistry {
             WhisperModelVariant.normalize(whisperModelVariant).map(SpeechEngineVariantKey.whisper)
         case .cohere:
             .cohere
+        case .gemini:
+            .gemini
         }
     }
 
@@ -348,6 +353,22 @@ public enum SpeechEngineCapabilityRegistry {
                 )
             )
         }
+    }
+
+    private static func geminiRow() -> SpeechEngineCapabilities {
+        SpeechEngineCapabilities(
+            key: .gemini,
+            supportsNativeLiveDictation: true,
+            supportsTailPreview: false,
+            providesWordTimestamps: true,
+            supportedLanguages: .automatic(),
+            supportsCustomVocabulary: false,
+            modelLifecycle: SpeechEngineModelLifecycle(
+                modelName: "Gemini 3.5 Transcribe", variantID: nil, selectableVariantIDs: [],
+                approximateDownloadSize: nil, isUserDeletable: false, minimumMemoryBytes: nil
+            ),
+            telemetryIdentity: SpeechEngineTelemetryIdentity(modelKind: .geminiSTT, engineVariant: .none)
+        )
     }
 
     private static func cohereRow() -> SpeechEngineCapabilities {

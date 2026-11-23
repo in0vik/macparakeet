@@ -625,6 +625,9 @@ struct SettingsView: View {
             return "Switching back to Parakeet reloads the speech engine. Dictation, file transcription, and meetings pause until the switch finishes."
         case .cohere:
             return "Cohere is a local batch engine. It records first and transcribes after you stop, with no live preview, word timestamps, speaker labels, or auto language detection. Dictation, file transcription, and meetings pause until the switch finishes."
+        case .gemini:
+            return "Google Gemini sends audio from this speech route to Google and uses your API quota. "
+                + "For dictation and meeting preview, this includes audio while recording."
         }
     }
 
@@ -1012,6 +1015,9 @@ struct SettingsView: View {
     private var liveDictationPreviewDetail: String {
         if viewModel.engine.speechEnginePreference == .cohere {
             return "Cohere is batch-only, so preview stays off until transcription finishes."
+        }
+        if viewModel.engine.speechEnginePreference == .gemini {
+            return "Shows text while you speak. Google Gemini receives audio during dictation when preview is on."
         }
 
         return "Shows a running transcript above the dictation pill as you speak. Parakeet and Nemotron support preview; Whisper shows text only when you finish."
@@ -2392,6 +2398,17 @@ struct SettingsView: View {
                 }
 
                 engineOptionGrid
+                if viewModel.engine.usesSpeechEngine(.gemini) {
+                    settingsToggleRow(
+                        title: "Word timestamps for Gemini recordings",
+                        detail: "Enable for subtitles or speaker labels. "
+                            + "Google may recognize fewer words in this mode.",
+                        isOn: Binding(
+                            get: { viewModel.engine.geminiWordTimestamps },
+                            set: { viewModel.engine.geminiWordTimestamps = $0 }
+                        )
+                    )
+                }
 
                 if let banner = nemotronDownloadBannerState {
                     EngineDownloadBanner(
@@ -2451,6 +2468,7 @@ struct SettingsView: View {
             if AppFeatures.cohereEngineEnabled {
                 cohereEngineTile
             }
+            geminiEngineTile
         }
     }
 
@@ -2533,6 +2551,27 @@ struct SettingsView: View {
             unavailableReason: engineSwitchUnavailableReason(for: .cohere),
             selectionRole: engineSelectionRole(for: .cohere),
             onSelect: { handleCohereTileTap() }
+        )
+    }
+
+    private var geminiEngineTile: some View {
+        EngineOptionTile(
+            icon: "cloud",
+            name: "Google Gemini",
+            tagline: "Cloud speech recognition",
+            strengths: [
+                "Live dictation and meeting preview",
+                "Multilingual files with word timestamps",
+                "Audio is sent to Google",
+            ],
+            helpText: "Add a Google Gemini API key in Settings → AI Provider. "
+                + "The selected audio is sent to Google and uses your API quota.",
+            modelStatus: nil,
+            isSelected: viewModel.engine.speechEnginePreference == .gemini,
+            isBusy: viewModel.engine.speechEngineSwitching,
+            unavailableReason: engineSwitchUnavailableReason(for: .gemini),
+            selectionRole: engineSelectionRole(for: .gemini),
+            onSelect: { selectEngine(.gemini) }
         )
     }
 
@@ -3138,6 +3177,8 @@ struct SettingsView: View {
             return "Preparing Whisper"
         case .cohere:
             return "Preparing Cohere"
+        case .gemini:
+            return "Checking Google Gemini"
         }
     }
 
